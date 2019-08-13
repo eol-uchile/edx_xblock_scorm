@@ -12,3 +12,20 @@ span.setting-input-file {
 span.setting-input-file span{
     font-weight: bold;
 }
+
+.alert {
+    position: relative;
+    font-size: 0.9rem;
+    font-style: italic;
+    padding: .75rem 1.25rem;
+    margin-top: -0.8rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: .25rem;
+}
+
+.alert-danger {
+    color: #721c24 !important;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}

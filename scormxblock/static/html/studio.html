@@ -31,6 +31,18 @@
     </li>
     <li class="field comp-setting-entry is-set">
       <div class="wrapper-comp-setting">
+          <label class="label setting-label" for="weight">{% trans field_weight.display_name %}</label>
+          <input class="input setting-input" name="weight" id="weight"
+                 pattern="\d*"
+                 value="{{ scorm_xblock.weight }}" type="number"
+                 step="{{ field_weight.values.step }}"
+                 min="{{ field_weight.values.min }}"
+          />
+      </div>
+      <span class="tip setting-help">{% trans field_weight.help %}</span>
+    </li>
+    <li class="field comp-setting-entry is-set">
+      <div class="wrapper-comp-setting">
         <label class="label setting-label" for="width">{% trans field_width.display_name %}</label>
         <input class="input setting-input" name="width" id="width" value="{{ scorm_xblock.width }}" type="number" />
       </div>

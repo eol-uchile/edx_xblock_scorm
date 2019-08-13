@@ -3,6 +3,11 @@
 <div class="scormxblock_block">
     {% if scorm_xblock.has_score %}
     <p>(<span class="lesson_score">{{ scorm_xblock.lesson_score }}</span>/{{ scorm_xblock.weight }} {% trans "points" %}) <span class="completion_status">{% trans completion_status %}</span></p>
+        {% if is_past_due %}
+        <div class="alert alert-danger">
+            {% trans "Ha terminado el periodo de calificación de esta Unidad. <b>No se registrarán los próximos puntajes que se obtengan en esta actividad.</b>" %}
+        </div>
+        {% endif %}
     {% endif %}
     {% if scorm_file_path %}
     <iframe class="scorm_object"

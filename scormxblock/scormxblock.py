@@ -185,7 +185,9 @@ class ScormXBlock(XBlock):
 
             self.set_fields_xblock(path_to_file)
 
-        return Response(json.dumps({'result': 'success'}), content_type='application/json')
+        response = Response(json.dumps({'result': 'success'}))
+        response.content_type = 'application/json'
+        return response
 
     @XBlock.json_handler
     def scorm_get_value(self, data, suffix=''):
@@ -361,10 +363,14 @@ class ScormXBlock(XBlock):
         """
         Get file hex digest (fingerprint).
         """
-        block_size = 8 * 1024
+        block_size = 64 * 1024
         sha1 = hashlib.sha1()
-        for block in iter(partial(file_descriptor.read, block_size), ''):
-            sha1.update(block)
+
+        if file_descriptor.multiple_chunks(block_size):
+            for chunk in f.chunks():
+                sha1.update(chunk)
+        else:
+            sha1.update(file_descriptor.read())
         file_descriptor.seek(0)
         return sha1.hexdigest()
 

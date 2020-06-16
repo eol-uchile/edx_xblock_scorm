@@ -367,7 +367,7 @@ class ScormXBlock(XBlock):
         sha1 = hashlib.sha1()
 
         if file_descriptor.multiple_chunks(block_size):
-            for chunk in f.chunks():
+            for chunk in f.chunks(block_size):
                 sha1.update(chunk)
         else:
             sha1.update(file_descriptor.read())

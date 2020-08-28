@@ -1,18 +1,25 @@
 {% load i18n %}
+<div class="openedxscorm_block">
+    {% if index_page_url %}
 
-<div class="scormxblock_block">
     {% if scorm_xblock.has_score %}
-    <p>(<span class="lesson_score">{{ scorm_xblock.lesson_score }}</span>/{{ scorm_xblock.weight }} {% trans "points" %}) <span class="completion_status">{% trans completion_status %}</span></p>
-        {% if is_past_due %}
-        <div class="alert alert-danger">
-            {% trans "Ha terminado el periodo de calificación de esta Unidad. <b>No se registrarán los próximos puntajes que se obtengan en esta actividad.</b>" %}
-        </div>
-        {% endif %}
+    <p>
+        (<span class="lesson_score">{{ grade|floatformat }}</span>/{{ scorm_xblock.weight|floatformat }} {% trans "points" %})
+        <span class="completion_status">{% trans completion_status %}</span>
+    </p>
     {% endif %}
-    {% if scorm_file_path %}
-    <iframe class="scorm_object"
-            src="{{ scorm_file_path }}"
-            width="{% if scorm_xblock.width %}{{ scorm_xblock.width }}{% else %}100%{% endif %}"
-            height="{{ scorm_xblock.height }}"></iframe>
+
+    <div class="js-scorm-block">
+        <div class="scorm_button">
+            <button class="js-button-full-screen full-screen-on">
+                {% trans "Pantalla Completa" %}
+            </button>
+            <button class="js-button-full-screen full-screen-off">
+                {% trans "Salir Pantalla Completa" %}
+            </button>
+        </div>
+
+        <iframe class="scorm_object" src="{{ index_page_url }}" width="{% if scorm_xblock.width %}{{ scorm_xblock.width }}{% else %}100%{% endif %}" {% if scorm_xblock.height %}height="{{ scorm_xblock.height }}" {% endif %}></iframe>
+    </div>
     {% endif %}
 </div>

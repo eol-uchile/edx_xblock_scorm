@@ -33,7 +33,10 @@ setup(
     entry_points={
         'xblock.v1': [
             'scormxblock = scormxblock:ScormXBlock',
-        ]
+        ],
+        "lms.djangoapp": [
+            "scormxblock = scormxblock.apps:ScormXBlockConfig",
+        ],
     },
     package_data=package_data("scormxblock", ["static", "public", "locale"]),
     license="Apache",

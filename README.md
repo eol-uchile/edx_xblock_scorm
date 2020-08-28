@@ -1,5 +1,8 @@
 edx_xblock_scorm
 =========================
+
+![https://github.com/eol-uchile/edx_xblock_scorm/actions](https://github.com/eol-uchile/edx_xblock_scorm/workflows/Python%20application/badge.svg)
+
 XBlock to display SCORM content within the Open edX LMS.  Editable within Open edx Studio. Will save student state and report scores to the progress tab of the course.
 Currently supports SCORM 1.2 and SCORM 2004 standard.
 
@@ -23,4 +26,9 @@ SCORM_STORAGE_CLASS = {
 }
 ```
 
+## TESTS
+**Prepare tests:**
+
+    > cd .github/
+    > docker-compose run --rm lms /openedx/requirements/edx_xblock_scorm/.github/test.sh
 

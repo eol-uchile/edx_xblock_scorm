@@ -9,7 +9,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def proxy_scorm_media(request, block_id, sha1, file):
+def proxy_scorm_media(request, block_id, file, sha1=None):
     """
     Render the media objects by proxy, as the files
     must be in the same domain as the LMS
@@ -20,8 +20,12 @@ def proxy_scorm_media(request, block_id, sha1, file):
     else:
       content_type = guess[0]
 
-    return HttpResponse(
-      get_scorm_storage().open("scorm/{}/{}/{}".format(block_id, sha1, file)).read(),
-      content_type=content_type,
+    if sha1:
+      location = "scorm/{}/{}/{}".format(block_id, sha1, file)
+    else:
+      location = "scorm/{}/{}".format(block_id, file)
 
+    return HttpResponse(
+      get_scorm_storage().open(location).read(),
+      content_type=content_type,
     ) 

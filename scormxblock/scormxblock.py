@@ -430,6 +430,11 @@ class ScormXBlock(XBlock):
         """
         Get the url of the index page of the scorm
         """
+        if not self.scorm_file_meta:
+            return ''
+        if self.scorm_file:
+            # old files - deprecated
+            return reverse('scormxblock:scorm-proxy-deprecated', kwargs={'block_id': self.location.block_id, 'file': self.path_index_page})
         return reverse('scormxblock:scorm-proxy', kwargs={'block_id': self.location.block_id, 'sha1': self.scorm_file_meta["sha1"], 'file': self.path_index_page})
     
     @staticmethod

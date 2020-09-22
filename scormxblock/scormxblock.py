@@ -208,22 +208,13 @@ class ScormXBlock(XBlock):
 
         with zipfile.ZipFile(package_file, "r") as scorm_zipfile:
             for zipinfo in scorm_zipfile.infolist():
-                if os.path.splitext(zipinfo.filename)[-1] in ["html", "html5", "css", "js", ".html", ".html5", ".css", ".js"]:
-                    try:
-                        storage.save(
-                            os.path.join(self.extract_folder_path, zipinfo.filename),
-                            ContentFile(scorm_zipfile.open(zipinfo.filename).read().encode())
-                            )
-                    except AttributeError:
-                        storage.save(
-                            os.path.join(self.extract_folder_path, zipinfo.filename),
-                            ContentFile(scorm_zipfile.open(zipinfo.filename).read())
-                            )
-                else:
-                    storage.save(
-                        os.path.join(self.extract_folder_path, zipinfo.filename),
-                        ContentFile(scorm_zipfile.open(zipinfo.filename).read())
-                        )
+                content_file = ContentFile(scorm_zipfile.open(zipinfo.filename).read())
+                if os.path.splitext(zipinfo.filename)[-1] in ["js", ".js"]:
+                    content_file.content_type = 'text/javascript' # fix b'text/javascript'
+                storage.save(
+                    os.path.join(self.extract_folder_path, zipinfo.filename),
+                    content_file
+                    )
         try:
             self.update_package_fields()
         except ScormError as e:

@@ -11,7 +11,7 @@ import os.path
 from django.core.files import File
 from django.core.files.base import ContentFile
 from django.urls import reverse
-from django.core.files.uploadedfile import SimpleUploadedFile, InMemoryUploadedFile
+from django.core.files.uploadedfile import SimpleUploadedFile, InMemoryUploadedFile, TemporaryUploadedFile
 from django.conf import settings
 from django.template import Context, Template
 from django.utils import timezone
@@ -186,7 +186,7 @@ class ScormXBlock(XBlock):
         self.update_package_meta(package_file)
 
         # Clone zip file before django closes it when uploaded
-        if isinstance(package_file, InMemoryUploadedFile):
+        if isinstance(package_file, InMemoryUploadedFile) or isinstance(package_file, TemporaryUploadedFile):
             package_file = SimpleUploadedFile(
                 package_file.name,
                 package_data,
@@ -199,7 +199,7 @@ class ScormXBlock(XBlock):
         logger.info('Scorm "%s" file stored at "%s"', package_file, self.package_path)
 
         # Then, extract zip file
-        if isinstance(package_file, InMemoryUploadedFile):
+        if isinstance(package_file, InMemoryUploadedFile) or isinstance(package_file, TemporaryUploadedFile):
             package_file = SimpleUploadedFile(
                 package_file.name,
                 package_data,

@@ -103,6 +103,7 @@ class ScormXBlock(XBlock):
     )
 
     has_author_view = True
+    show_in_read_only_mode = True
 
     def render_template(self, template_path, context):
         template_str = self.resource_string(template_path)

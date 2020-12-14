@@ -36,8 +36,8 @@ _ = lambda text: text
 class ScormXBlock(XBlock):
 
     display_name = String(
-        display_name=_("Display Name"),
-        help=_("Display name for this module"),
+        display_name=_("Nombre visualizado"),
+        help=_("Nombre visualizado para este módulo"),
         default="Scorm",
         scope=Scope.settings,
     )
@@ -74,15 +74,15 @@ class ScormXBlock(XBlock):
         default=0
     )
     weight = Integer(
-        display_name=_('Weight'),
-        help=_("Weight of this Scorm, by default keep 1"),
+        display_name=_('Puntaje Máximo'),
+        help=_("Puntaje máximo del Scorm. Por defecto el valor es 1."),
         default=1,
         values={"min": 0, "step": 1},
         scope=Scope.settings
     )
     has_score = Boolean(
-        display_name=_("Scored"),
-        help=_("Select False if this component will not receive a numerical score from the Scorm"),
+        display_name=_("Puntuado"),
+        help=_("Seleccione Falso si este componente no recibirá una puntuación numérica del Scorm"),
         default=True,
         scope=Scope.settings
     )
@@ -91,13 +91,13 @@ class ScormXBlock(XBlock):
         scope=Scope.settings,
     )
     width = Integer(
-        display_name=_("Display Width (px)"),
-        help=_('Width of iframe, if empty, the default 100%'),
+        display_name=_("Ancho de pantalla (px)"),
+        help=_('Ancho del iframe, si está vacío, el valor predeterminado es 100%'),
         scope=Scope.settings
     )
     height = Integer(
-        display_name=_("Display Height (px)"),
-        help=_('Height of iframe'),
+        display_name=_("Altura de pantalla (px)"),
+        help=_('Altura del iframe'),
         default=650,
         scope=Scope.settings
     )

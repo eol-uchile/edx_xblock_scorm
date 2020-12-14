@@ -51,4 +51,16 @@ function ScormStudioXBlock(runtime, element) {
       runtime.notify('cancel', {});
   });
 
+  $(function () {
+    var show_or_hide_warning = () => {
+        let has_score = $(element).find('select[name=has_score]').val();
+        let $warning = $(element).find('.setting-has_score')
+        has_score == 'True' ? $warning.show() : $warning.hide();
+    }
+    $(element).find('select[name=has_score]').change(()=> {
+        show_or_hide_warning();
+    });
+    show_or_hide_warning(); // on init
+  });
+
 }

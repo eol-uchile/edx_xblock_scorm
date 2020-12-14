@@ -13,11 +13,11 @@
 
         <li class="field comp-setting-entry is-set">
             <div class="wrapper-comp-setting">
-                <label class="label setting-label" for="scorm_file">{% trans "Upload .zip package" %}</label>
+                <label class="label setting-label" for="scorm_file">{% trans "Subir paquete .zip con Scorm" %}</label>
                 <input class="input setting-input" name="scorm_file" id="scorm_file" type="file" accept="application/zip" />
             </div>
             {% if scorm_xblock.scorm_file_meta.name %}
-            <span class="tip setting-help setting-input-file"><span>{% trans "Currently:" %}</span> {{ scorm_xblock.scorm_file_meta.name }}</span>
+            <span class="tip setting-help setting-input-file"><span>{% trans "Actualmente:" %}</span> {{ scorm_xblock.scorm_file_meta.name }}</span>
             {% endif %}
         </li>
 
@@ -30,6 +30,7 @@
                     {% endfor %}
                 </select>
             </div>
+            <p class="tip setting-help setting-has_score" style="display: block; font-size: 1em; color: red;">{% trans "En los Scorm puntuados <strong>NO</strong> se podrán: cambiar las respuestas, reevaluar a los estudiantes, modificar el archivo scorm ya guardado." %}</p>
             <span class="tip setting-help">{% trans field_has_score.help %}</span>
         </li>
 

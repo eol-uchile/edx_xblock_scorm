@@ -13,6 +13,11 @@ class ScormXBlockConfig(AppConfig):
                 PluginURLs.NAMESPACE: u'scormxblock',
                 PluginURLs.REGEX: r'^eol/scormxblock/',
                 PluginURLs.RELATIVE_PATH: u'urls',
+            },
+            ProjectType.CMS: {
+                PluginURLs.NAMESPACE: u'scormxblock',
+                PluginURLs.REGEX: r'^eol/scormxblock/',
+                PluginURLs.RELATIVE_PATH: 'urls_cms',
             }
         },
         PluginSettings.CONFIG: {

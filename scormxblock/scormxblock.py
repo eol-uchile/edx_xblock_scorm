@@ -27,7 +27,7 @@ from .utils import get_scorm_storage
 from xmodule.util.duedate import get_extended_due_date
 from datetime import datetime
 import pytz
-
+from django.db import IntegrityError, transaction
 logger = logging.getLogger(__name__)
 
 # Make '_' a no-op so we can scrape strings
@@ -74,6 +74,14 @@ class ScormXBlock(XBlock):
     success_status = String(
         scope=Scope.user_state,
         default='unknown'
+    )
+    task_id = String(
+        scope=Scope.settings,
+        default=''
+    )
+    task_token = String(
+        scope=Scope.settings,
+        default=''
     )
     data_scorm = Dict(
         scope=Scope.user_state,
@@ -144,6 +152,7 @@ class ScormXBlock(XBlock):
     
 
     def studio_view(self, context=None):
+        from django.contrib.auth.base_user import BaseUserManager
         # Note that we cannot use xblockutils's StudioEditableXBlockMixin because we
         # need to support package file uploads.
         studio_context = {
@@ -154,12 +163,18 @@ class ScormXBlock(XBlock):
             "field_height": self.fields["height"],
             "scorm_xblock": self,
         }
+        settings = {
+            "course_id": str(self.course_id),
+            "url_task": reverse('scormxblock:scorm_task'),
+            'block_id': str(self.location),
+            "token": BaseUserManager().make_random_password(50)
+        }
         studio_context.update(context or {})
         template = self.render_template("static/html/studio.html", studio_context)
         frag = Fragment(template)
         frag.add_css(self.resource_string("static/css/scormxblock.css"))
         frag.add_javascript(self.resource_string("static/js/src/studio.js"))
-        frag.initialize_js("ScormStudioXBlock")
+        frag.initialize_js("ScormStudioXBlock", json_args=settings)
         return frag
 
     def author_view(self, context=None):
@@ -178,60 +193,74 @@ class ScormXBlock(XBlock):
             json.dumps(data), content_type="application/json", charset="utf8"
         )
 
+    #@transaction.non_atomic_requests
     @XBlock.handler
     def studio_submit(self, request, suffix=''):
-        self.display_name = request.params['display_name']
-        self.width = request.params['width']
-        self.height = request.params['height']
-        self.has_score = request.params['has_score']
-        self.weight = request.params['weight']
-        self.icon_class = 'problem' if self.has_score == 'True' else 'video'
-
         response = {"result": "success", "errors": []}
-        if not hasattr(request.params["file"], "file"):
-            # File not uploaded
-            return self.json_response(response)
+        if request.params['task_step'] == 'initial':
+            self.display_name = request.params['display_name']
+            self.width = request.params['width']
+            self.height = request.params['height']
+            self.has_score = request.params['has_score']
+            self.weight = request.params['weight']
+            self.task_token = request.params['task_token']
+            self.icon_class = 'problem' if self.has_score == 'True' else 'video'
 
-        package_file = request.params["file"].file
-        package_data = package_file.read()
-        self.update_package_meta(package_file)
+            if not hasattr(request.params["file"], "file"):
+                # File not uploaded
+                return self.json_response(response)
 
-        # Clone zip file before django closes it when uploaded
-        if isinstance(package_file, InMemoryUploadedFile) or isinstance(package_file, TemporaryUploadedFile):
-            package_file = SimpleUploadedFile(
-                package_file.name,
-                package_data,
-                package_file.content_type
-            )
+            package_file = request.params["file"].file
+            package_data = package_file.read()
+            self.update_package_meta(package_file)
 
-        # First, save scorm file in the storage for mobile clients
-        storage = get_scorm_storage()
-        storage.save(self.package_path, File(package_file))
-        logger.info('Scorm "%s" file stored at "%s"', package_file, self.package_path)
-
-        # Then, extract zip file
-        if isinstance(package_file, InMemoryUploadedFile) or isinstance(package_file, TemporaryUploadedFile):
-            package_file = SimpleUploadedFile(
-                package_file.name,
-                package_data,
-                package_file.content_type
-            )
-
-        with zipfile.ZipFile(package_file, "r") as scorm_zipfile:
-            for zipinfo in scorm_zipfile.infolist():
-                content_file = ContentFile(scorm_zipfile.open(zipinfo.filename).read())
-                if os.path.splitext(zipinfo.filename)[-1] in ["js", ".js"]:
-                    content_file.content_type = 'text/javascript' # fix b'text/javascript'
-                storage.save(
-                    os.path.join(self.extract_folder_path, zipinfo.filename),
-                    content_file
-                    )
-        try:
-            self.update_package_fields()
-        except ScormError as e:
-            response["errors"].append(e.args[0])
-
+            # Clone zip file before django closes it when uploaded
+            if isinstance(package_file, InMemoryUploadedFile) or isinstance(package_file, TemporaryUploadedFile):
+                package_file = SimpleUploadedFile(
+                    package_file.name,
+                    package_data,
+                    package_file.content_type
+                )
+            # First, save scorm file in the storage for mobile clients
+            storage = get_scorm_storage()
+            storage.save(self.package_path, File(package_file))
+            logger.info('Scorm "%s" file stored at "%s"', package_file, self.package_path)
+            response['data_task'] = {
+                'extract_folder_path': self.extract_folder_path,
+                'package_path': self.package_path()
+            }
+        else:
+            try:
+                self.update_package_fields()
+            except ScormError as e:
+                response["errors"].append(e.args[0])
         return self.json_response(response)
+
+    @XBlock.handler
+    def save_task_id(self, request, suffix=''):
+        """
+            Save task id
+        """
+        self.task_id = request.params['task_id']
+        return self.json_response({})
+    
+    @XBlock.handler
+    def studio_submit_status(self, request, suffix=''):
+        """
+            Check status task
+        """
+        from lms.djangoapps.instructor_task.models import InstructorTask
+        try:
+            task = InstructorTask.objects.get(task_id=self.task_id)
+            if task.task_state == 'SUCCESS':
+                task_state = 'complete'
+            elif task.task_state == 'FAILURE':
+                task_state = 'failure'
+            else:
+                task_state = 'running'
+        except InstructorTask.DoesNotExist:
+            task_state = 'error'
+        return self.json_response({'task_state': task_state})
 
     @property
     def package_path(self):

@@ -2,17 +2,47 @@
 import json
 import unittest
 
-
+from util.testing import UrlResetMixin
+from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
+from opaque_keys.edx.keys import CourseKey, UsageKey
 from ddt import ddt, data
+from django.test import Client
 from freezegun import freeze_time
+from django.urls import reverse
+from lms.djangoapps.instructor_task.models import InstructorTask
+from .task import scorm_task
+from student.tests.factories import UserFactory
 import mock
 from xblock.field_data import DictFieldData
 
 from .scormxblock import ScormXBlock
 
+class TestRequest(object):
+    # pylint: disable=too-few-public-methods
+    """
+    Module helper for @json_handler
+    """
+    method = None
+    body = None
+    success = None
+    POST = {}
+    user = None
+    META = {
+        'REMOTE_ADDR': '',
+        'HTTP_USER_AGENT': '',
+        'SERVER_NAME':'',
+        'HTTP_X_FORWARDED_PROTO': 'https'
+    }
+    get_host = mock.Mock()
+    is_secure = mock.Mock()
 
 @ddt
-class ScormXBlockTests(unittest.TestCase):
+class ScormXBlockTests(UrlResetMixin, ModuleStoreTestCase):
+    def setUp(self):
+        super(ScormXBlockTests, self).setUp()
+        self.user = UserFactory(username='uname', password='password', email='email@asd.com')
+        self.client = Client()
+
     @staticmethod
     def make_one(**kw):
         """
@@ -39,6 +69,8 @@ class ScormXBlockTests(unittest.TestCase):
         self.assertEqual(block.icon_class, "video")
         self.assertEqual(block.width, None)
         self.assertEqual(block.height, 650)
+        self.assertEqual(block.task_id, '')
+        self.assertEqual(block.task_token, '')
 
     def test_save_settings_scorm(self):
         block = self.make_one()
@@ -50,6 +82,8 @@ class ScormXBlockTests(unittest.TestCase):
             "width": 800,
             "height": 450,
             "weight": 3.0,
+            "task_step": "initial",
+            "task_token": "asdf"
         }
 
         block.studio_submit(mock.Mock(method="POST", params=fields))
@@ -61,24 +95,20 @@ class ScormXBlockTests(unittest.TestCase):
 
 
     @freeze_time("2018-05-01")
-    @mock.patch("scormxblock.ScormXBlock.update_package_fields")
-    @mock.patch("scormxblock.scormxblock.os")
-    @mock.patch("scormxblock.scormxblock.zipfile")
-    @mock.patch("scormxblock.scormxblock.File", return_value="call_file")
-    @mock.patch("scormxblock.scormxblock.get_scorm_storage")
     @mock.patch(
         "scormxblock.ScormXBlock.package_path", return_value="package_path"
     )
+    @mock.patch("scormxblock.scormxblock.os")
+    @mock.patch("scormxblock.scormxblock.File", return_value="call_file")
+    @mock.patch("scormxblock.scormxblock.get_scorm_storage")
     @mock.patch("scormxblock.ScormXBlock.get_sha1", return_value="sha1")
     def test_save_scorm_zipfile(
         self,
         get_sha1,
-        package_path,
         default_storage,
         mock_file,
-        zipfile,
         mock_os,
-        update_package_fields,
+        package_path
     ):
         block = self.make_one()
         mock_file_object = mock.Mock()
@@ -93,6 +123,8 @@ class ScormXBlockTests(unittest.TestCase):
             "width": None,
             "height": 450,
             "weight": 3.0,
+            "task_step": "initial",
+            "task_token": "asdf"
         }
 
         block.studio_submit(mock.Mock(method="POST", params=fields))
@@ -110,8 +142,43 @@ class ScormXBlockTests(unittest.TestCase):
 
         self.assertEqual(block.scorm_file_meta, expected_scorm_file_meta)
 
-        zipfile.ZipFile.assert_called_once_with(mock_file_object, "r")
-        update_package_fields.assert_called_once_with()
+    def test_save_task_id(self):
+        block = self.make_one()
+        
+        fields = {
+            "task_id": "123-123-456"
+        }
+
+        block.save_task_id(mock.Mock(method="POST", params=fields))
+        self.assertEqual(block.task_id, fields['task_id'])
+
+    def test_submit_status(self):
+        course_id = CourseKey.from_string('course-v1:eol+Test101+2021')
+        task_type = 'SCORM'
+        task_key = str(course_id)
+        task_input = {}
+        task = InstructorTask.create(course_id, task_type, task_key, task_input, self.user)
+        block = self.make_one(task_id=task.task_id)
+        expected_response = {'task_state': 'running'}
+        response = block.studio_submit_status(mock.Mock(method="POST", params={}))
+        self.assertEqual(json.loads(response.text), expected_response)
+
+        task.task_state = 'FAILURE'
+        task.save()
+        expected_response = {'task_state': 'failure'}
+        response = block.studio_submit_status(mock.Mock(method="POST", params={}))
+        self.assertEqual(json.loads(response.text), expected_response)
+
+        task.task_state = 'SUCCESS'
+        task.save()
+        expected_response = {'task_state': 'complete'}
+        response = block.studio_submit_status(mock.Mock(method="POST", params={}))
+        self.assertEqual(json.loads(response.text), expected_response)
+
+        block = self.make_one()
+        expected_response = {'task_state': 'error'}
+        response = block.studio_submit_status(mock.Mock(method="POST", params={}))
+        self.assertEqual(json.loads(response.text), expected_response)
 
     def test_build_file_storage_path(self):
         block = self.make_one(
@@ -254,3 +321,96 @@ class ScormXBlockTests(unittest.TestCase):
         )
 
         self.assertEqual(response.json, {"value": block.data_scorm[value["name"]]})
+
+    @mock.patch("scormxblock.task.validate_token", return_value=True)
+    def test_scorm_task(self, mock_validate):
+        post_data = {
+            'extract_folder_path': 'folder/path',
+            'package_path': 'path',
+            'token': '123',
+            'course_id': 'course-v1:eol+Test101+2021',
+            'block_id': 'block-v1:eol+Test101+2021+type@scormxblock+block@189368e38e4e404686e514e95cd4749e',
+        }
+        request = TestRequest()
+        request.method = 'POST'
+        request.POST = post_data
+        request.user = self.user
+        result = scorm_task(request)
+        r = json.loads(result._container[0].decode())
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(r['status'], 'Running')
+
+    def test_scorm_task_wrong_method(self):
+        post_data = {
+            'extract_folder_path': 'folder/path',
+            'package_path': 'path',
+            'token': '123',
+            'course_id': 'course-v1:eol+Test101+2021',
+            'block_id': 'block-v1:eol+Test101+2021+type@scormxblock+block@189368e38e4e404686e514e95cd4749e',
+        }
+        request = TestRequest()
+        request.method = 'GET'
+        request.POST = post_data
+        request.user = self.user
+        result = scorm_task(request)
+        self.assertEqual(result.status_code, 400)
+
+    def test_scorm_task_miss_params(self):
+        post_data = {
+            'extract_folder_path': 'folder/path',
+            'token': '123',
+            'course_id': 'course-v1:eol+Test101+2021',
+            'block_id': 'block-v1:eol+Test101+2021+type@scormxblock+block@189368e38e4e404686e514e95cd4749e',
+        }
+        request = TestRequest()
+        request.method = 'POST'
+        request.POST = post_data
+        request.user = self.user
+        result = scorm_task(request)
+        self.assertEqual(result.status_code, 400)
+
+    def test_scorm_task_wrong_course_id(self):
+        post_data = {
+            'extract_folder_path': 'folder/path',
+            'package_path': 'path',
+            'token': '123',
+            'course_id': 'asdasdasd',
+            'block_id': 'block-v1:eol+Test101+2021+type@scormxblock+block@189368e38e4e404686e514e95cd4749e',
+        }
+        request = TestRequest()
+        request.method = 'POST'
+        request.POST = post_data
+        request.user = self.user
+        result = scorm_task(request)
+        self.assertEqual(result.status_code, 400)
+
+    def test_scorm_task_wrong_block_id(self):
+        post_data = {
+            'extract_folder_path': 'folder/path',
+            'package_path': 'path',
+            'token': '123',
+            'course_id': 'course-v1:eol+Test101+2021',
+            'block_id': 'asdasdasdasd',
+        }
+        request = TestRequest()
+        request.method = 'POST'
+        request.POST = post_data
+        request.user = self.user
+        result = scorm_task(request)
+        self.assertEqual(result.status_code, 400)
+
+    @mock.patch("scormxblock.task.validate_token", return_value=False)
+    def test_scorm_task_wrong_token(self, mock_validate):
+        post_data = {
+            'extract_folder_path': 'folder/path',
+            'package_path': 'path',
+            'token': '456',
+            'course_id': 'course-v1:eol+Test101+2021',
+            'block_id': 'block-v1:eol+Test101+2021+type@scormxblock+block@189368e38e4e404686e514e95cd4749e',
+        }
+        request = TestRequest()
+        request.method = 'POST'
+        request.POST = post_data
+        request.user = self.user
+        result = scorm_task(request)
+        self.assertEqual(result.status_code, 400)

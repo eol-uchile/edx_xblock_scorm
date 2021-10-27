@@ -20,5 +20,11 @@ services:
     depends_on:
       - memcached
       - mongodb
-
+  cms:
+    image: eoluchile/edx-platform:testing-koa
+    volumes:
+      - ../:/openedx/requirements/edx_xblock_scorm
+    depends_on:
+      - memcached
+      - mongodb
 

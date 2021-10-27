@@ -37,6 +37,9 @@ setup(
         "lms.djangoapp": [
             "scormxblock = scormxblock.apps:ScormXBlockConfig",
         ],
+        "cms.djangoapp": [
+            "scormxblock = scormxblock.apps:ScormXBlockConfig",
+        ]
     },
     package_data=package_data("scormxblock", ["static", "public", "locale"]),
     license="Apache",

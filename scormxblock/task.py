@@ -68,12 +68,12 @@ def task_get_data(
     current_step = {'step': 'Uploading Scorm'}
     return task_progress.update_task_state(extra_meta=current_step)
 
-def task_process_data(request, course_id, extract_folder_path, package_path):
+def task_process_data(request, course_id, extract_folder_path, package_path, block_id):
     course_key = CourseKey.from_string(course_id)
     task_type = 'SCORM'
     task_class = process_data
     task_input = {'course_id': course_id, 'extract_folder_path': extract_folder_path, 'package_path':package_path}
-    task_key = "{}".format(course_id)
+    task_key = "{}".format(block_id)
     return submit_task(
         request,
         task_type,
@@ -106,7 +106,7 @@ def scorm_task(request):
     if not validate_token(course_key, request.POST['token'], block_id):
         return HttpResponse(status=400)
     try:
-        task = task_process_data(request, request.POST.get('course_id'), request.POST.get('extract_folder_path'), request.POST.get('package_path'))
+        task = task_process_data(request, request.POST.get('course_id'), request.POST.get('extract_folder_path'), request.POST.get('package_path'), request.POST['block_id'])
         return JsonResponse({'status': 'Running', 'task_id':task.task_id}, status=200)
     except AlreadyRunningError:
         logger.info("Scorm - Task Already Running Error, course_id: {}".format(request.POST['course_id']))

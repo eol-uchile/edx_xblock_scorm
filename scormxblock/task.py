@@ -109,7 +109,7 @@ def scorm_task(request):
         task = task_process_data(request, request.POST.get('course_id'), request.POST.get('extract_folder_path'), request.POST.get('package_path'))
         return JsonResponse({'status': 'Running', 'task_id':task.task_id}, status=200)
     except AlreadyRunningError:
-        logger.info("Scorm - Task Already Running Error, course_id: {}".format(course_id))
+        logger.info("Scorm - Task Already Running Error, course_id: {}".format(request.POST['course_id']))
         return JsonResponse({'status': 'AlreadyRunning'}, status=200)
 
 def validate_token(course_key, token, block_id):

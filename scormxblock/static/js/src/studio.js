@@ -3,6 +3,7 @@ function ScormStudioXBlock(runtime, element, settings) {
   var handlerUrl = runtime.handlerUrl(element, 'studio_submit');
   var handlerUrlTaskStatus = runtime.handlerUrl(element, 'studio_submit_status');
   var handlerUrlSaveTaskId = runtime.handlerUrl(element, 'save_task_id');
+  var status_runtime = 'save';
   function ScormCheckStatus(){
     $.ajax({
         url: handlerUrlTaskStatus,
@@ -12,17 +13,27 @@ function ScormStudioXBlock(runtime, element, settings) {
         processData: false,
         type: "POST",
         success: function(data) {
-            if (data["task_state"] == 'running'){
-                setTimeout(ScormCheckStatus, 5000);
-            }
-            else{
-                if(data['task_state'] == 'complete'){
-                    return ScormUpdateXblock();
+            if (status_runtime == 'save'){
+                if (data["task_state"] == 'running'){
+                    setTimeout(ScormCheckStatus, 5000);
                 }
                 else{
-                    return ScormTaskError(data['task_state']);
+                    if(data['task_state'] == 'complete'){
+                        return ScormUpdateXblock();
+                    }
+                    else{
+                        return ScormTaskError(data['task_state']);
+                    }
                 }
             }
+            else{
+                status_runtime = 'error';
+                runtime.notify("error", {
+                    "message": "La subida del archivo fue cancelada.",
+                    "title": "Scorm component save error"
+                });
+            }
+            
         },
         error: function() {
             return ScormTaskError('error');
@@ -36,6 +47,7 @@ function ScormTaskError(status){
     else{
         var error = 'Error al procesar el archivo, contáctese con mesa de ayuda.'
     }
+    status_runtime = 'error';
     runtime.notify("error", {
         "message": error,
         "title": "Scorm component save error"
@@ -55,12 +67,14 @@ function ScormUpdateXblock(){
         success: function(response) {
             if (response.errors.length > 0) {
                 response.errors.forEach(function(error) {
+                    status_runtime = 'error';
                     runtime.notify("error", {
                         "message": error,
                         "title": "Scorm component save error"
                     });
                 });
             } else {
+                status_runtime = 'end';
                 runtime.notify('save', {
                     state: 'end'
                 });
@@ -131,7 +145,7 @@ function ScormTaskCreate(data){
       runtime.notify('save', {
           state: 'start'
       });
-
+      status_runtime = 'save';
       $.ajax({
           url: handlerUrl,
           dataType: 'json',
@@ -146,6 +160,7 @@ function ScormTaskCreate(data){
           success: function(response) {
               if (response.errors.length > 0) {
                   response.errors.forEach(function(error) {
+                      status_runtime = 'error';
                       runtime.notify("error", {
                           "message": error,
                           "title": "Scorm component save error"
@@ -160,6 +175,7 @@ function ScormTaskCreate(data){
   });
 
   $(element).find('.cancel-button').bind('click', function() {
+      status_runtime = 'error';
       runtime.notify('cancel', {});
   });
 

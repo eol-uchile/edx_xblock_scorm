@@ -97,9 +97,6 @@ class ScormXBlockTests(UrlResetMixin, ModuleStoreTestCase):
 
 
     @freeze_time("2018-05-01")
-    @mock.patch(
-        "scormxblock.ScormXBlock.package_path", return_value="package_path"
-    )
     @mock.patch("scormxblock.scormxblock.os")
     @mock.patch("scormxblock.scormxblock.File", return_value="call_file")
     @mock.patch("scormxblock.scormxblock.get_scorm_storage")
@@ -110,13 +107,12 @@ class ScormXBlockTests(UrlResetMixin, ModuleStoreTestCase):
         default_storage,
         mock_file,
         mock_os,
-        package_path
     ):
         block = self.make_one()
         mock_file_object = mock.Mock()
         mock_file_object.configure_mock(name="scorm_file_name")
         default_storage.configure_mock(size=mock.Mock(return_value="1234"))
-        mock_os.configure_mock(path=mock.Mock(join=mock.Mock(return_value="path_join")))
+        mock_os.configure_mock(path=mock.Mock(join=mock.Mock(return_value="path_join"), splitext=mock.Mock(return_value="path_join")))
 
         fields = {
             "display_name": "Test Block",
@@ -132,7 +128,7 @@ class ScormXBlockTests(UrlResetMixin, ModuleStoreTestCase):
         block.studio_submit(mock.Mock(method="POST", params=fields))
 
         get_sha1.assert_called_once_with(mock_file_object)
-        default_storage().save.assert_called_once_with(package_path, "call_file")
+        default_storage().save.assert_called_once_with('org/course/block_type/block_id/sha1a', "call_file")
         mock_file.assert_called_once_with(mock_file_object)
 
         expected_scorm_file_meta = {

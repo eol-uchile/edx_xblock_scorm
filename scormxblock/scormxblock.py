@@ -227,7 +227,7 @@ class ScormXBlock(XBlock):
             logger.info('Scorm "%s" file stored at "%s"', package_file, self.package_path)
             response['data_task'] = {
                 'extract_folder_path': self.extract_folder_path,
-                'package_path': self.package_path()
+                'package_path': self.package_path
             }
         else:
             try:

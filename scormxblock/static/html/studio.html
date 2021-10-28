@@ -16,6 +16,7 @@
                 <label class="label setting-label" for="scorm_file">{% trans "Subir paquete .zip con Scorm" %}</label>
                 <input class="input setting-input" name="scorm_file" id="scorm_file" type="file" accept="application/zip" />
             </div>
+            <p class="tip setting-help setting-scorm_file" style="display: block; font-size: 1em; color: black;">{% trans "Los tiempos de subida del archivo puede demorar varios minutos en completarse, dependiendo del tamaño del archivo." %}</p>
             {% if scorm_xblock.scorm_file_meta.name %}
             <span class="tip setting-help setting-input-file"><span>{% trans "Actualmente:" %}</span> {{ scorm_xblock.scorm_file_meta.name }}</span>
             {% endif %}

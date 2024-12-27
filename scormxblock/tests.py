@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 import json
-import unittest
 
 from util.testing import UrlResetMixin
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
-from opaque_keys.edx.keys import CourseKey, UsageKey
+from opaque_keys.edx.keys import CourseKey
 from ddt import ddt, data
 from django.test import Client
 from freezegun import freeze_time
-from django.urls import reverse
 from lms.djangoapps.instructor_task.models import InstructorTask
 from .task import scorm_task
 from student.tests.factories import UserFactory

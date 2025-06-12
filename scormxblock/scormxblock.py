@@ -201,16 +201,8 @@ class ScormXBlock(XBlock):
                 return self.json_response(response)
 
             package_file = request.params["file"].file
-            package_data = package_file.read()
             self.update_package_meta(package_file)
 
-            # Clone zip file before django closes it when uploaded
-            if isinstance(package_file, InMemoryUploadedFile) or isinstance(package_file, TemporaryUploadedFile):
-                package_file = SimpleUploadedFile(
-                    package_file.name,
-                    package_data,
-                    package_file.content_type
-                )
             # First, save scorm file in the storage for mobile clients
             storage = get_scorm_storage()
             storage.save(self.package_path, File(package_file))

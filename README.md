@@ -31,4 +31,3 @@ SCORM_STORAGE_CLASS = {
 
     > cd .github/
     > docker-compose run --rm lms /openedx/requirements/edx_xblock_scorm/.github/test.sh
-

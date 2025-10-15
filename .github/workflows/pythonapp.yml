@@ -2,8 +2,6 @@ name: Python application
 
 on:
   push:
-    paths-ignore:
-      - '.github/workflows/**'
     branches:
       - 'master'
       - 'koa'
@@ -17,8 +15,6 @@ on:
       - 'master'
       - 'koa'
       - 'lilac'
-    paths-ignore:
-      - '.github/workflows/**'
 
 jobs:
   build:

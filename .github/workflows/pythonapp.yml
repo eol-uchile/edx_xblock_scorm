@@ -6,6 +6,8 @@ on:
       - '.github/workflows/**'
     branches:
       - 'master'
+      - 'koa'
+      - 'lilac'
   pull_request:
     types:
       - opened
@@ -13,6 +15,8 @@ on:
       - synchronize
     branches:
       - 'master'
+      - 'koa'
+      - 'lilac'
     paths-ignore:
       - '.github/workflows/**'
 

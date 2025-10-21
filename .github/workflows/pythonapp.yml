@@ -3,22 +3,18 @@ name: Python application
 on:
   push:
     branches:
-      - 'master'
-      - 'koa'
-      - 'lilac'
+      - 'eol-release/*'
   pull_request:
     types:
       - opened
       - reopened
       - synchronize
     branches:
-      - 'master'
-      - 'koa'
-      - 'lilac'
+      - 'eol-release/*'
 
 jobs:
   build:
-    uses: eol-uchile/workflow-commons/.github/workflows/pythonapp.yml@1.0.0
+    uses: eol-uchile/workflow-commons/.github/workflows/pythonapp.yml@2.0.0
     with:
       app_id: ${{ vars.EOLITO_BOT_APP_ID }}
       django-lms: true

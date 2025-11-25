@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 
-from util.testing import UrlResetMixin
+from common.djangoapps.util.testing import UrlResetMixin
 from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
 from opaque_keys.edx.keys import CourseKey
 from ddt import ddt, data
@@ -9,7 +9,7 @@ from django.test import Client
 from freezegun import freeze_time
 from lms.djangoapps.instructor_task.models import InstructorTask
 from .task import scorm_task
-from student.tests.factories import UserFactory
+from common.djangoapps.student.tests.factories import UserFactory
 import mock
 from xblock.field_data import DictFieldData
 

@@ -126,7 +126,7 @@ class ScormXBlockTests(UrlResetMixin, ModuleStoreTestCase):
         block.studio_submit(mock.Mock(method="POST", params=fields))
 
         get_sha1.assert_called_once_with(mock_file_object)
-        default_storage().save.assert_called_once_with('org/course/block_type/block_id/sha1a', "call_file")
+        default_storage.save.assert_called_once_with('org/course/block_type/block_id/sha1a', "call_file")
         mock_file.assert_called_once_with(mock_file_object)
 
         expected_scorm_file_meta = {
@@ -267,7 +267,7 @@ class ScormXBlockTests(UrlResetMixin, ModuleStoreTestCase):
             response.json,
             {
                 "completion_status": "completion_status",
-                "lesson_score": 0.2,
+                "lesson_score": 0.20,
                 "result": "success",
             },
         )

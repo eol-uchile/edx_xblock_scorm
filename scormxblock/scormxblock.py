@@ -27,6 +27,7 @@ from xmodule.util.duedate import get_extended_due_date
 from datetime import datetime
 import pytz
 from django.db import IntegrityError, transaction
+from urllib.parse import unquote as url_unquote
 logger = logging.getLogger(__name__)
 
 # Make '_' a no-op so we can scrape strings
@@ -443,8 +444,8 @@ class ScormXBlock(XBlock):
             return ''
         if self.scorm_file:
             # old files - deprecated
-            return reverse('scormxblock:scorm-proxy-deprecated', kwargs={'block_id': self.location.block_id, 'file': self.path_index_page})
-        return reverse('scormxblock:scorm-proxy', kwargs={'block_id': self.location.block_id, 'sha1': self.scorm_file_meta["sha1"], 'file': self.path_index_page})
+            return url_unquote(reverse('scormxblock:scorm-proxy-deprecated', kwargs={'block_id': self.location.block_id, 'file': self.path_index_page}))
+        return url_unquote(reverse('scormxblock:scorm-proxy', kwargs={'block_id': self.location.block_id, 'sha1': self.scorm_file_meta["sha1"], 'file': self.path_index_page}))
     
     @staticmethod
     def get_sha1(file_descriptor):

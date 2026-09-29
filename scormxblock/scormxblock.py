@@ -408,7 +408,7 @@ class ScormXBlock(XBlock):
                 resource = root.find("resources/resource")
                 schemaversion = root.find("metadata/schemaversion")
 
-            if resource:
+            if resource is not None:
                 self.path_index_page = resource.get("href")
             if (schemaversion is not None) and (
                 re.match("^1.2$", schemaversion.text) is None
